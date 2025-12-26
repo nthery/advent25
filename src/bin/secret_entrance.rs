@@ -70,7 +70,8 @@ fn execute_instructions(instructions: &[Rotation]) -> usize {
 }
 
 fn rotate(mut dial: usize, rotation: &Rotation) -> usize {
-    debug_assert!(dial < MAX_DIAL);
+    debug_assert!(dbg!(dial) < MAX_DIAL);
+    dbg!(rotation);
     match rotation.direction {
         Direction::Right => {
             dial = (dial + rotation.steps) % MAX_DIAL;
@@ -83,7 +84,7 @@ fn rotate(mut dial: usize, rotation: &Rotation) -> usize {
             }
         }
     };
-    debug_assert!(dial < MAX_DIAL);
+    debug_assert!(dbg!(dial) < MAX_DIAL);
     dial
 }
 
@@ -134,6 +135,23 @@ mod tests {
             steps: 30,
         };
         assert_eq!(rotate(10, &r), 80);
+    }
+
+    #[test]
+    fn rotate_steps_greater_than_max_dial() {
+        // Right rotation: (10 + 260) % 100 == 70
+        let r = Rotation {
+            direction: Direction::Right,
+            steps: 260,
+        };
+        assert_eq!(rotate(10, &r), 70);
+
+        // Left rotation: 100 - (130 - 10) % 100 == 80
+        let l = Rotation {
+            direction: Direction::Left,
+            steps: 130,
+        };
+        assert_eq!(rotate(10, &l), 80);
     }
 
     use std::io::Cursor;

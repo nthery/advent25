@@ -20,11 +20,13 @@ fn solve_for<R: BufRead>(mut input: R) -> anyhow::Result<usize> {
     Ok(execute_instructions(&instructions))
 }
 
+#[derive(Debug)]
 enum Direction {
     Left,
     Right,
 }
 
+#[derive(Debug)]
 struct Rotation {
     direction: Direction,
     steps: usize,
@@ -35,6 +37,7 @@ const MAX_DIAL: usize = 100;
 fn read_instructions<R: BufRead>(input: &mut R) -> anyhow::Result<Vec<Rotation>> {
     let mut instructions = Vec::new();
     for (i, line) in input.lines().enumerate() {
+        let line_number = i+ 1;
         let line = line?;
         let line = line.trim();
         if line.is_empty() {
@@ -45,12 +48,12 @@ fn read_instructions<R: BufRead>(input: &mut R) -> anyhow::Result<Vec<Rotation>>
         let direction = match direction_char {
             'L' => Direction::Left,
             'R' => Direction::Right,
-            _ => anyhow::bail!("line {}: invalid direction: {}", i, direction_char),
+            _ => anyhow::bail!("line {}: invalid direction: {}", line_number, direction_char),
         };
         let steps_str = &line[1..];
         let steps: usize = steps_str
             .parse()
-            .map_err(|e| anyhow::anyhow!("line {}: invalid step: {}: {}", i, steps_str, e))?;
+            .map_err(|e| anyhow::anyhow!("line {}: invalid step: {}: {}", line_number, steps_str, e))?;
         instructions.push(Rotation { direction, steps });
     }
     Ok(instructions)
@@ -70,21 +73,21 @@ fn execute_instructions(instructions: &[Rotation]) -> usize {
 }
 
 fn rotate(mut dial: usize, rotation: &Rotation) -> usize {
-    debug_assert!(dbg!(dial) < MAX_DIAL);
-    dbg!(rotation);
+    debug_assert!(dial < MAX_DIAL);
     match rotation.direction {
         Direction::Right => {
             dial = (dial + rotation.steps) % MAX_DIAL;
         }
         Direction::Left => {
-            if dial < rotation.steps {
-                dial = MAX_DIAL - (rotation.steps - dial) % MAX_DIAL;
+            let steps = rotation.steps % MAX_DIAL;
+            if dial < steps {
+                dial = MAX_DIAL - (steps - dial);
             } else {
-                dial -= rotation.steps;
+                dial -= steps;
             }
         }
     };
-    debug_assert!(dbg!(dial) < MAX_DIAL);
+    debug_assert!(dial < MAX_DIAL);
     dial
 }
 
@@ -138,20 +141,30 @@ mod tests {
     }
 
     #[test]
-    fn rotate_steps_greater_than_max_dial() {
-        // Right rotation: (10 + 260) % 100 == 70
+    fn right_rotation_steps_greater_than_max_dial() {
         let r = Rotation {
             direction: Direction::Right,
             steps: 260,
         };
         assert_eq!(rotate(10, &r), 70);
+    }
 
-        // Left rotation: 100 - (130 - 10) % 100 == 80
+    #[test]
+    fn left_rotation_steps_greater_than_max_dial() {
         let l = Rotation {
             direction: Direction::Left,
             steps: 130,
         };
         assert_eq!(rotate(10, &l), 80);
+    }
+
+    #[test]
+    fn left_rotation_steps_greater_than_max_dial_ends_on_zero() {
+        let l = Rotation {
+            direction: Direction::Left,
+            steps: 849,
+        };
+        assert_eq!(rotate(49, &l), 0);
     }
 
     use std::io::Cursor;

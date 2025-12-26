@@ -1,7 +1,6 @@
 use std::env::args;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::iter::Iterator;
 
 fn main() -> anyhow::Result<()> {
     let path = args()
@@ -20,13 +19,13 @@ fn solve_for<R: BufRead>(mut input: R) -> anyhow::Result<usize> {
     Ok(execute_instructions(&instructions))
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 enum Direction {
     Left,
     Right,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 struct Rotation {
     direction: Direction,
     steps: usize,
@@ -34,10 +33,41 @@ struct Rotation {
 
 const MAX_DIAL: usize = 100;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Dial {
+    pos: usize,
+}
+
+impl Dial {
+    fn new(pos: usize) -> Self {
+        debug_assert!(pos < MAX_DIAL);
+        Self { pos }
+    }
+
+    fn position(&self) -> usize {
+        self.pos
+    }
+
+    fn turn_right(&mut self, steps: usize) {
+        self.pos = (self.pos + steps) % MAX_DIAL;
+        debug_assert!(self.pos < MAX_DIAL);
+    }
+
+    fn turn_left(&mut self, steps: usize) {
+        let steps = steps % MAX_DIAL;
+        if self.pos < steps {
+            self.pos = MAX_DIAL - (steps - self.pos);
+        } else {
+            self.pos -= steps;
+        }
+        debug_assert!(self.pos < MAX_DIAL);
+    }
+}
+
 fn read_instructions<R: BufRead>(input: &mut R) -> anyhow::Result<Vec<Rotation>> {
     let mut instructions = Vec::new();
     for (i, line) in input.lines().enumerate() {
-        let line_number = i+ 1;
+        let line_number = i + 1;
         let line = line?;
         let line = line.trim();
         if line.is_empty() {
@@ -48,47 +78,35 @@ fn read_instructions<R: BufRead>(input: &mut R) -> anyhow::Result<Vec<Rotation>>
         let direction = match direction_char {
             'L' => Direction::Left,
             'R' => Direction::Right,
-            _ => anyhow::bail!("line {}: invalid direction: {}", line_number, direction_char),
+            _ => anyhow::bail!(
+                "line {}: invalid direction: {}",
+                line_number,
+                direction_char
+            ),
         };
         let steps_str = &line[1..];
-        let steps: usize = steps_str
-            .parse()
-            .map_err(|e| anyhow::anyhow!("line {}: invalid step: {}: {}", line_number, steps_str, e))?;
+        let steps: usize = steps_str.parse().map_err(|e| {
+            anyhow::anyhow!("line {}: invalid step: {}: {}", line_number, steps_str, e)
+        })?;
         instructions.push(Rotation { direction, steps });
     }
     Ok(instructions)
 }
 
 fn execute_instructions(instructions: &[Rotation]) -> usize {
-    let mut dial = 50;
+    let mut dial = Dial::new(50);
     let mut number_of_zeroes = 0;
-    debug_assert!(dial != 0);
+    debug_assert!(dial.position() != 0);
     for rotation in instructions {
-        dial = rotate(dial, rotation);
-        if dial == 0 {
+        match rotation.direction {
+            Direction::Right => dial.turn_right(rotation.steps),
+            Direction::Left => dial.turn_left(rotation.steps),
+        }
+        if dial.position() == 0 {
             number_of_zeroes += 1;
         }
     }
     number_of_zeroes
-}
-
-fn rotate(mut dial: usize, rotation: &Rotation) -> usize {
-    debug_assert!(dial < MAX_DIAL);
-    match rotation.direction {
-        Direction::Right => {
-            dial = (dial + rotation.steps) % MAX_DIAL;
-        }
-        Direction::Left => {
-            let steps = rotation.steps % MAX_DIAL;
-            if dial < steps {
-                dial = MAX_DIAL - (steps - dial);
-            } else {
-                dial -= steps;
-            }
-        }
-    };
-    debug_assert!(dial < MAX_DIAL);
-    dial
 }
 
 #[cfg(test)]
@@ -101,7 +119,9 @@ mod tests {
             direction: Direction::Right,
             steps: 5,
         };
-        assert_eq!(rotate(10, &r), 15);
+        let mut d = Dial::new(10);
+        d.turn_right(r.steps);
+        assert_eq!(d.position(), 15);
     }
 
     #[test]
@@ -110,7 +130,9 @@ mod tests {
             direction: Direction::Right,
             steps: 60,
         };
-        assert_eq!(rotate(60, &r), 20);
+        let mut d = Dial::new(60);
+        d.turn_right(r.steps);
+        assert_eq!(d.position(), 20);
     }
 
     #[test]
@@ -119,7 +141,9 @@ mod tests {
             direction: Direction::Left,
             steps: 5,
         };
-        assert_eq!(rotate(20, &r), 15);
+        let mut d = Dial::new(20);
+        d.turn_left(r.steps);
+        assert_eq!(d.position(), 15);
     }
 
     #[test]
@@ -128,7 +152,9 @@ mod tests {
             direction: Direction::Left,
             steps: 10,
         };
-        assert_eq!(rotate(10, &r), 0);
+        let mut d = Dial::new(10);
+        d.turn_left(r.steps);
+        assert_eq!(d.position(), 0);
     }
 
     #[test]
@@ -137,7 +163,9 @@ mod tests {
             direction: Direction::Left,
             steps: 30,
         };
-        assert_eq!(rotate(10, &r), 80);
+        let mut d = Dial::new(10);
+        d.turn_left(r.steps);
+        assert_eq!(d.position(), 80);
     }
 
     #[test]
@@ -146,7 +174,9 @@ mod tests {
             direction: Direction::Right,
             steps: 260,
         };
-        assert_eq!(rotate(10, &r), 70);
+        let mut d = Dial::new(10);
+        d.turn_right(r.steps);
+        assert_eq!(d.position(), 70);
     }
 
     #[test]
@@ -155,7 +185,9 @@ mod tests {
             direction: Direction::Left,
             steps: 130,
         };
-        assert_eq!(rotate(10, &l), 80);
+        let mut d = Dial::new(10);
+        d.turn_left(l.steps);
+        assert_eq!(d.position(), 80);
     }
 
     #[test]
@@ -164,7 +196,9 @@ mod tests {
             direction: Direction::Left,
             steps: 849,
         };
-        assert_eq!(rotate(49, &l), 0);
+        let mut d = Dial::new(49);
+        d.turn_left(l.steps);
+        assert_eq!(d.position(), 0);
     }
 
     use std::io::Cursor;

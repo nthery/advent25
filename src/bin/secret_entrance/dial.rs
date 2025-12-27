@@ -28,26 +28,18 @@ impl Dial {
     /// Turns dial `n` clicks to the left and returns number of times dial pointed at zero
     /// while being turned.
     pub fn turn_left(&mut self, n: usize) -> usize {
-        // Perform math on signed integers to handle wrapping.
-        let new_pos = self.pos as isize - n as isize;
-        const MAX_DIAL_SIGNED: isize = MAX_DIAL as isize;
-        let nb_dial_on_zero = if new_pos <= 0 {
-            (-(new_pos / MAX_DIAL_SIGNED) + 1) as usize
-        } else {
-            0
-        };
-        self.pos = if new_pos < 0 {
-            let remainder = -new_pos % MAX_DIAL_SIGNED;
-            if remainder == 0 {
-                0
-            } else {
-                MAX_DIAL_SIGNED - remainder
-            }
-        } else {
-            new_pos
-        } as usize;
+        // To avoid complications induced by negative numbers, create a mirror
+        // dial, turn it right instead, and mirror resulting position back.
+        let mut mirror_dial = Dial::new(Self::mirror_position(self.pos));
+        let nb_dial_on_zero = mirror_dial.turn_right(n);
+        self.pos = Self::mirror_position(mirror_dial.position());
         debug_assert!(self.pos < MAX_DIAL);
         nb_dial_on_zero
+    }
+
+    /// Returns dial position `pos` in a mirror dial.
+    fn mirror_position(pos: usize) -> usize {
+        if pos == 0 { 0 } else { MAX_DIAL - pos }
     }
 }
 

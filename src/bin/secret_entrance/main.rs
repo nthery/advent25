@@ -68,13 +68,10 @@ fn execute_instructions(instructions: &[Rotation]) -> usize {
     let mut number_of_zeroes = 0;
     debug_assert!(dial.position() != 0);
     for rotation in instructions {
-        match rotation.direction {
+        number_of_zeroes += match rotation.direction {
             Direction::Right => dial.turn_right(rotation.steps),
             Direction::Left => dial.turn_left(rotation.steps),
-        }
-        if dial.position() == 0 {
-            number_of_zeroes += 1;
-        }
+        };
     }
     number_of_zeroes
 }

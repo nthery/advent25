@@ -1,17 +1,11 @@
+use std::io::BufRead;
+
 mod dial;
 
 use dial::Dial;
-use std::env::args;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 
 fn main() -> anyhow::Result<()> {
-    let path = args()
-        .nth(1)
-        .ok_or_else(|| anyhow::anyhow!("missing input file"))?;
-    let input = BufReader::new(
-        File::open(&path).map_err(|e| anyhow::anyhow!("failed to open {}: {}", path, e))?,
-    );
+    let input = advent_code_25::open_input_file()?;
     let answer = solve_for(input)?;
     println!("answer: {}", answer);
     Ok(())

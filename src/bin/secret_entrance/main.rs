@@ -19,7 +19,7 @@ fn main() -> anyhow::Result<()> {
 
 fn solve_for<R: BufRead>(mut input: R) -> anyhow::Result<usize> {
     let instructions = read_instructions(&mut input)?;
-    Ok(execute_instructions(&instructions))
+    Ok(execute_instructions(Dial::new(50), &instructions))
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -63,10 +63,10 @@ fn read_instructions<R: BufRead>(input: &mut R) -> anyhow::Result<Vec<Rotation>>
     Ok(instructions)
 }
 
-fn execute_instructions(instructions: &[Rotation]) -> usize {
-    let mut dial = Dial::new(50);
-    let mut number_of_zeroes = 0;
-    debug_assert!(dial.position() != 0);
+/// Turns `dial` as specified in `instructions` and returns number of times it
+/// pointed to zero while being turned.
+fn execute_instructions(mut dial: Dial, instructions: &[Rotation]) -> usize {
+    let mut number_of_zeroes = if dial.position() == 0 { 1 } else { 0 };
     for rotation in instructions {
         number_of_zeroes += match rotation.direction {
             Direction::Right => dial.turn_right(rotation.steps),

@@ -30,11 +30,19 @@ impl Dial {
     pub fn turn_left(&mut self, n: usize) -> usize {
         // Perform math on signed integers to handle wrapping.
         let new_pos = self.pos as isize - n as isize;
-        const MAX_DIAL_SIGNED : isize = MAX_DIAL as isize;
-        let nb_dial_on_zero = if new_pos <= 0 {  (- (new_pos / MAX_DIAL_SIGNED)+ 1) as usize } else { 0 };
-        self.pos = if new_pos < 0 { 
-            let remainder = - new_pos % MAX_DIAL_SIGNED;
-            if remainder == 0 { 0 } else { MAX_DIAL_SIGNED - remainder }
+        const MAX_DIAL_SIGNED: isize = MAX_DIAL as isize;
+        let nb_dial_on_zero = if new_pos <= 0 {
+            (-(new_pos / MAX_DIAL_SIGNED) + 1) as usize
+        } else {
+            0
+        };
+        self.pos = if new_pos < 0 {
+            let remainder = -new_pos % MAX_DIAL_SIGNED;
+            if remainder == 0 {
+                0
+            } else {
+                MAX_DIAL_SIGNED - remainder
+            }
         } else {
             new_pos
         } as usize;

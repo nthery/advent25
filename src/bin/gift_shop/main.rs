@@ -45,7 +45,7 @@ fn sum_invalid_ids_in_range(range: Range) -> usize {
 }
 
 fn is_invalid_id(id: usize) -> bool {
-    let nb_digits = id.ilog10() + 1;
+    let nb_digits = nb_digits(id);
     if nb_digits == 1 || (nb_digits & 1) != 0 {
         false
     } else {
@@ -56,9 +56,24 @@ fn is_invalid_id(id: usize) -> bool {
     }
 }
 
+/// Returns number of base-10 digits in `n`.
+fn nb_digits(n: usize) -> u32 {
+    if n == 0 { 1 } else { n.ilog10() + 1 }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn digits() {
+        assert_eq!(nb_digits(0), 1);
+        assert_eq!(nb_digits(9), 1);
+        assert_eq!(nb_digits(10), 2);
+        assert_eq!(nb_digits(99), 2);
+        assert_eq!(nb_digits(100), 3);
+        assert_eq!(nb_digits(999), 3);
+    }
 
     #[test]
     fn id_with_odd_number_of_digits_is_valid() {

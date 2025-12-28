@@ -1,4 +1,5 @@
-///! Day 2 - The Gift Shop
+// Day 2 - The Gift Shop
+
 use std::io::{BufRead, Split};
 
 fn main() -> anyhow::Result<()> {
@@ -86,17 +87,35 @@ fn sum_invalid_ids_in_range(range: Range) -> usize {
     }
     acc
 }
-
 fn is_invalid_id(id: usize) -> bool {
     let nb_digits = nb_digits(id);
-    if nb_digits == 1 || (nb_digits & 1) != 0 {
-        false
-    } else {
-        let power = 10_usize.pow(nb_digits / 2);
-        let left = id / power;
-        let right = id % power;
-        left == right
+    for i in 1..=nb_digits {
+        if nb_digits.is_multiple_of(i)
+            && (nb_digits >= 2 * i)
+            && is_id_made_of_repeating_sequences(id, i)
+        {
+            return true;
+        }
     }
+    false
+}
+
+/// Return true if `id` is the concatenation of repeating sequences of identical
+/// `sequence_len` digits.
+fn is_id_made_of_repeating_sequences(id: usize, sequence_len: u32) -> bool {
+    let power = 10_usize.pow(sequence_len);
+    let (mut most_significant_parts, least_significant_part) = (id / power, id % power);
+    while most_significant_parts > 0 {
+        let current_part;
+        (most_significant_parts, current_part) = (
+            most_significant_parts / power,
+            most_significant_parts % power,
+        );
+        if current_part != least_significant_part {
+            return false;
+        }
+    }
+    true
 }
 
 /// Returns number of base-10 digits in `n`.
@@ -164,5 +183,18 @@ mod tests {
         assert!(is_invalid_id(11));
         assert!(is_invalid_id(1212));
         assert!(is_invalid_id(123123));
+    }
+
+    #[test]
+    fn test_is_id_made_of_repeating_sequences() {
+        assert_eq!(is_id_made_of_repeating_sequences(11, 1), true);
+        assert_eq!(is_id_made_of_repeating_sequences(111111, 1), true);
+        assert_eq!(is_id_made_of_repeating_sequences(12, 1), false);
+        assert_eq!(is_id_made_of_repeating_sequences(1212, 2), true);
+        assert_eq!(is_id_made_of_repeating_sequences(121212, 2), true);
+        assert_eq!(is_id_made_of_repeating_sequences(1213, 2), false);
+        assert_eq!(is_id_made_of_repeating_sequences(123123, 3), true);
+        assert_eq!(is_id_made_of_repeating_sequences(123123123, 3), true);
+        assert_eq!(is_id_made_of_repeating_sequences(132123, 3), false);
     }
 }

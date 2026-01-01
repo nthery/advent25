@@ -3,5 +3,13 @@ name = "advent_code_25"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "secret_entrance"
+path = "src/bin/secret_entrance/secret_entrance.rs"
+
+[[bin]]
+name = "gift_shop"
+path = "src/bin/gift_shop/gift_shop.rs"
+
 [dependencies]
 anyhow = "1.0"

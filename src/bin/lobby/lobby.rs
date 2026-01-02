@@ -19,17 +19,7 @@ fn solve_for<R: BufRead>(input: R) -> anyhow::Result<usize> {
     for bank in input.split(b'\n') {
         let bank = bank?;
         if is_bank_valid(&bank) {
-            let left_max_index = (&bank[0..bank.len() - 1])
-                .iter()
-                .first_max_position()
-                .unwrap();
-            let right_max_index = left_max_index
-                + 1
-                + (&bank[left_max_index + 1..])
-                    .iter()
-                    .first_max_position()
-                    .unwrap();
-            max_joltage += bank_joltage(&bank, left_max_index, right_max_index);
+            max_joltage += max_joltage_for_bank(&bank);
         } else {
             anyhow::bail!("ill-formed bank: {:?}", bank);
         }
@@ -38,13 +28,26 @@ fn solve_for<R: BufRead>(input: R) -> anyhow::Result<usize> {
     Ok(max_joltage)
 }
 
+fn max_joltage_for_bank(bank: &[u8]) -> usize {
+    let left_max_index = (&bank[0..bank.len() - 1])
+        .iter()
+        .first_max_position()
+        .unwrap();
+    let right_max_index = left_max_index
+        + 1
+        + (&bank[left_max_index + 1..])
+            .iter()
+            .first_max_position()
+            .unwrap();
+    joltage_for_selected_batteries(&bank, left_max_index, right_max_index)
+}
+
 /// Checks that `bank` contains only digits and is long enough.
 fn is_bank_valid(bank: &[u8]) -> bool {
     bank.len() >= 2 && bank.iter().all(|b| b'0' <= *b && *b <= b'9')
 }
 
-/// Returns joltage for specified batteries.
-fn bank_joltage(bank: &[u8], left_index: usize, right_index: usize) -> usize {
+fn joltage_for_selected_batteries(bank: &[u8], left_index: usize, right_index: usize) -> usize {
     from_digit(bank[left_index]) * 10 + from_digit(bank[right_index])
 }
 
@@ -71,8 +74,14 @@ mod tests {
     }
 
     #[test]
-    fn test_bank_joltage() {
-        assert_eq!(bank_joltage(b"12", 0, 1), 12);
-        assert_eq!(bank_joltage(b"96", 0, 1), 96);
+    fn test_joltage_for_selected_batteries() {
+        assert_eq!(joltage_for_selected_batteries(b"12", 0, 1), 12);
+        assert_eq!(joltage_for_selected_batteries(b"96", 0, 1), 96);
+    }
+
+    #[test]
+    fn test_max_joltage_for_bank() {
+        assert_eq!(max_joltage_for_bank(b"987654321111111"), 98);
+        assert_eq!(max_joltage_for_bank(b"811111111111119"), 89);
     }
 }

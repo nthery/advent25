@@ -15,5 +15,9 @@ path = "src/bin/gift_shop/gift_shop.rs"
 name = "lobby"
 path = "src/bin/lobby/lobby.rs"
 
+[[bin]]
+name = "printing_department"
+path = "src/bin/printing_department/printing_department.rs"
+
 [dependencies]
 anyhow = "1.0"

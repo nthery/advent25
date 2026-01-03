@@ -23,24 +23,20 @@ fn nb_accessible_rolls(grid: &Grid, debug: bool) -> usize {
     for y in 0..grid.height() {
         for x in 0..grid.width() {
             if grid.is_roll_at(x, y) {
-                if nb_neighboring_rolls(&grid, x, y) < 4 {
+                if nb_neighboring_rolls(grid, x, y) < 4 {
                     sum += 1;
                     if debug {
                         print!("x");
                     }
-                } else {
-                    if debug {
-                        print!("@");
-                    }
+                } else if debug {
+                    print!("@");
                 }
-            } else {
-                if debug {
-                    print!(".");
-                }
+            } else if debug {
+                print!(".");
             }
         }
         if debug {
-            println!("");
+            println!();
         }
     }
     sum

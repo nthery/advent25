@@ -42,12 +42,21 @@ impl Grid {
     }
 
     pub fn is_roll_at(&self, x: usize, y: usize) -> bool {
+        let tile = self.content[self.to_offset(x, y)];
+        debug_assert!(tile == b'@' || tile == b'.');
+        tile == b'@'
+    }
+
+    pub fn remove_roll_at(&mut self, x: usize, y: usize) {
+        debug_assert!(self.is_roll_at(x, y));
+        let offset = self.to_offset(x, y);
+        self.content[offset] = b'.';
+    }
+
+    fn to_offset(&self, x: usize, y: usize) -> usize {
         debug_assert!(x < self.width());
         debug_assert!(y < self.height());
-        let offset = y * (self.width + 1) + x;
-        let x = self.content[offset];
-        debug_assert!(x == b'@' || x == b'.');
-        x == b'@'
+        y * (self.width + 1) + x
     }
 }
 
@@ -75,5 +84,16 @@ mod tests {
         assert!(grid.is_roll_at(0, 2));
         assert!(!grid.is_roll_at(9, 2));
         Ok(())
+    }
+
+    #[test]
+    fn remove_roll() {
+        let payload = indoc! {br"
+            ..@
+        "};
+        let mut grid = Grid::load(Cursor::new(payload)).unwrap();
+        assert!(grid.is_roll_at(2, 0));
+        grid.remove_roll_at(2, 0);
+        assert!(!grid.is_roll_at(2, 0));
     }
 }
